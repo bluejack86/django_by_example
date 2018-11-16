@@ -1,0 +1,14 @@
+<!--Bootstrap分页 for django2.1
+需要传入名为 page_obj 的由 Paginator.page(page_number) 得到的 Page 对象
+ }-->
+<ul class="pagination">
+{% if page_obj.has_previous %}
+    <li class="page-item"><a class="page-link" href="?page=1">首页</a></li>
+    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">上一页</a></li>
+{% endif %}
+    <li class="page-item"><a class="page-link" href="?page={{page_obj.number}}">{{page_obj.number}} of {{ page_obj.paginator.num_pages }}</a></li>
+{% if page_obj.has_next %}
+    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">下一页</a></li>
+    <li class="page-item"><a class="page-link" href="?page=last">尾页</a></li>
+{% endif %}
+</ul>
