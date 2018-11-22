@@ -5,11 +5,14 @@ from django.shortcuts import get_object_or_404, render
 from django.core.mail import send_mail
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from taggit.models import Tag
+from django.db.models import Count
 
 
 class ListView(generic.ListView):
     queryset = Post.objects.filter(status='published')
     paginate_by = 3
+
+
 # default:
 # context = {
 #                 'paginator': paginator,
@@ -20,8 +23,12 @@ class ListView(generic.ListView):
 # template_name = '<app name>/<model name>_list.html'
 
 
-def post_list(request):
-    posts = Post.objects.filter(status='published')
+def post_list(request, tag_slug=None):
+    posts = Post.published.all()
+    tag = None
+    if tag_slug:
+        tag = get_object_or_404(Tag, slug=tag_slug)
+        posts = posts.filter(tags__in=[tag])
     paginator = Paginator(posts, 3)
     page_id = request.GET.get('page')
     try:
@@ -30,7 +37,7 @@ def post_list(request):
         page = paginator.page(1)
     except EmptyPage:
         page = paginator.page(paginator.num_pages)
-    context = {'object_list': page, 'page_obj': page}
+    context = {'object_list': page, 'page_obj': page, 'tag': tag}
     return render(request, 'blog/post_list.html', context=context)
 
 
@@ -46,8 +53,12 @@ def post_detail(request, pk):
             new_comment.save()
     else:
         comment_form = CommentForm()
-    return render(request, 'blog/post_detail.html',
-                  {'post': post, 'comments': comments, 'new_comment': new_comment, 'comment_form': comment_form})
+    post_tags_ids = post.tags.values_list('id', flat=True)
+    similar_tags = Post.published.filter(tags__in=post_tags_ids).exclude(id=post.id)
+    similar_posts = similar_tags.annotate(same_tags=Count('tags')).order_by('-same_tags', '-publish')[:4]
+    context = {'post': post, 'comments': comments, 'new_comment': new_comment, 'comment_form': comment_form,
+               'similar_posts': similar_posts}
+    return render(request, 'blog/post_detail.html', context=context)
 
 
 def post_share(request, pk):

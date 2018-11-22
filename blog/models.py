@@ -5,9 +5,9 @@ from django.urls import reverse
 from taggit.managers import TaggableManager
 
 
-# class PublishedManager(models.Manager):
-#     def get_queryset(self):
-#         return super(PublishedManager, self).get_queryset().filter(status='published')
+class PublishedManager(models.Manager):
+    def get_queryset(self):
+        return super(PublishedManager, self).get_queryset().filter(status='published')
 
 
 class Post(models.Model):
@@ -21,7 +21,8 @@ class Post(models.Model):
     updated = models.DateTimeField(auto_now=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='draft')
     tags = TaggableManager()
-    # published = PublishedManager()
+    objects = models.Manager()
+    published = PublishedManager()
 
     class Meta:
         ordering = ('-publish',)
